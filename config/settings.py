@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'transaksi',
     'perawatan', 
     'dashboard',
+    'kelas',    
 ]
 
 MIDDLEWARE = [
