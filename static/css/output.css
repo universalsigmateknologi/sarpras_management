@@ -786,6 +786,10 @@ video {
   margin-right: 0.5rem;
 }
 
+.ml-2 {
+  margin-left: 0.5rem;
+}
+
 .block {
   display: block;
 }
@@ -858,6 +862,10 @@ video {
   height: 1px;
 }
 
+.h-9 {
+  height: 2.25rem;
+}
+
 .max-h-\[65vh\] {
   max-height: 65vh;
 }
@@ -912,6 +920,14 @@ video {
 
 .w-full {
   width: 100%;
+}
+
+.w-9 {
+  width: 2.25rem;
+}
+
+.min-w-0 {
+  min-width: 0px;
 }
 
 .max-w-\[1400px\] {
@@ -1041,6 +1057,12 @@ video {
 
 .overflow-x-hidden {
   overflow-x: hidden;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .rounded-2xl {
