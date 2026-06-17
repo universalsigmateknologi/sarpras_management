@@ -4,6 +4,7 @@
 
 {% block content %}
 <form method="post" id="bulkForm" action="{% url 'inventaris:index' %}">
+    <input type="hidden" name="_bulk" value="1">
     {% csrf_token %}
     <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8" aria-label="Ringkasan aset">
         <div class="stat-card fade-up fade-up-d1">
@@ -52,11 +53,7 @@
                     <input type="hidden" name="status" value="{{ status_filter }}">
                     <input type="hidden" name="sort" value="{{ sort_key }}">
                     <input type="hidden" name="dir" value="{{ direction }}">
-                    <i class="fa-regular fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[12px] text-muted"></i>
                     <input type="text" id="searchInput" name="q" value="{{ query }}" placeholder="Cari aset..." class="w-full sm:w-56 pl-9 pr-10 py-2 text-sm bg-subtle border-0 rounded-lg focus:outline-none focus:ring-1 focus:ring-ink/20 placeholder:text-muted/60 font-body" aria-label="Cari aset">
-                    <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded hover:bg-ink/5" aria-label="Cari">
-                        <i class="fa-solid fa-arrow-right text-[11px] text-muted"></i>
-                    </button>
                 </form>
             </div>
         </div>
@@ -167,6 +164,7 @@
             </div>
         </div>
     </section>
+
 </form>
 
 <div class="bulk-bar {% if open_modal %}visible{% endif %}" id="bulkBar">

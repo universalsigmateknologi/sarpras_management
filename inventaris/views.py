@@ -154,10 +154,11 @@ def build_context(request):
             | Q(nama_barang__icontains=query)
             | Q(kategori__nama_kategori__icontains=query)
             | Q(lokasi__nama_ruangan__icontains=query)
-            | Q(kondisi__icontains=qubase_queryery)
+            | Q(kondisi__icontains=query)
             | Q(merek__icontains=query)
             | Q(nomor_seri__icontains=query)
         ).distinct()
+
 
     detail_barang = None
     edit_barang = None
@@ -194,7 +195,12 @@ def build_context(request):
 
 
 def handle_post(request):
+    # Hanya proses aksi bulk jika memang request berasal dari bulkForm
+    if not request.POST.get('_bulk'):
+        return render(request, 'inventaris/index.html', build_context(request))
+
     action = request.POST.get('action')
+
 
     if action == 'edit':
         barang = get_object_or_404(Barang, pk=request.POST.get('barang_id'))
@@ -258,6 +264,8 @@ def handle_post(request):
 
 @login_required
 def inventaris_index(request):
+    # Pastikan request GET (search/filter/sort) tidak diperlakukan sebagai POST massal
     if request.method == 'POST':
         return handle_post(request)
     return render(request, 'inventaris/index.html', build_context(request))
+
