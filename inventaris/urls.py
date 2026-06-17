@@ -6,3 +6,4 @@ app_name = 'inventaris'
 urlpatterns = [
     path('', views.inventaris_index, name='index'),
 ]
+
