@@ -195,34 +195,35 @@ def build_context(request):
 
 
 def handle_post(request):
-    # Hanya proses aksi bulk jika memang request berasal dari bulkForm
-    if not request.POST.get('_bulk'):
-        return render(request, 'inventaris/index.html', build_context(request))
-
     action = request.POST.get('action')
 
-
+    # 1) Proses edit: form edit tidak mengirim _bulk, jadi jangan blokir
     if action == 'edit':
         barang = get_object_or_404(Barang, pk=request.POST.get('barang_id'))
         form = BarangForm(request.POST, request.FILES, instance=barang)
         if form.is_valid():
             form.save()
             messages.success(request, 'Data aset berhasil diperbarui.')
-        else:
-            messages.error(request, 'Periksa kembali data yang dimasukkan.')
-            context = build_context(request)
-            context.update({
-                'edit_barang': barang,
-                'form': form,
-                'open_modal': True,
-            })
-            return render(request, 'inventaris/index.html', context, status=400)
-        return redirect(reverse('inventaris:index'))
+            return redirect(reverse('inventaris:index'))
+
+        messages.error(request, 'Periksa kembali data yang dimasukkan.')
+        context = build_context(request)
+        context.update({
+            'edit_barang': barang,
+            'form': form,
+            'open_modal': True,
+        })
+        return render(request, 'inventaris/index.html', context, status=400)
+
+    # 2) Proses aksi bulk: hanya jika request berasal dari bulkForm
+    if not request.POST.get('_bulk'):
+        return render(request, 'inventaris/index.html', build_context(request))
 
     barang_ids = request.POST.getlist('barang_ids')
     if not barang_ids:
         messages.warning(request, 'Pilih minimal satu aset untuk aksi massal.')
         return redirect(reverse('inventaris:index'))
+
 
     queryset = Barang.objects.filter(pk__in=barang_ids)
     count = queryset.count()
