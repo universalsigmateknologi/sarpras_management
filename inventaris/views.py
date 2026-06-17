@@ -159,9 +159,9 @@ def build_context(request):
             | Q(nomor_seri__icontains=query)
         ).distinct()
 
-
     detail_barang = None
     edit_barang = None
+    create_barang = None
     form = None
 
     if request.GET.get('detail'):
@@ -170,6 +170,10 @@ def build_context(request):
     if request.GET.get('edit'):
         edit_barang = get_object_or_404(Barang, pk=request.GET.get('edit'))
         form = BarangForm(instance=edit_barang)
+
+    if request.GET.get('create'):
+        create_barang = True
+        form = BarangForm()
 
     return {
         'active_page': 'inventaris',
@@ -189,15 +193,33 @@ def build_context(request):
         'sort_options': build_sort_options(filters['sort_key'], filters['direction']),
         'detail_barang': detail_barang,
         'edit_barang': edit_barang,
+        'create_barang': create_barang,
         'form': form,
-        'open_modal': bool(detail_barang or edit_barang),
+        'open_modal': bool(detail_barang or edit_barang or create_barang),
     }
 
 
 def handle_post(request):
     action = request.POST.get('action')
 
-    # 1) Proses edit: form edit tidak mengirim _bulk, jadi jangan blokir
+    # 1) Proses create: form create tidak mengirim _bulk, jadi jangan blokir
+    if action == 'create':
+        form = BarangForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Data aset berhasil ditambahkan.')
+            return redirect(reverse('inventaris:index'))
+
+        messages.error(request, 'Periksa kembali data yang dimasukkan.')
+        context = build_context(request)
+        context.update({
+            'create_barang': True,
+            'form': form,
+            'open_modal': True,
+        })
+        return render(request, 'inventaris/index.html', context, status=400)
+
+    # 2) Proses edit: form edit tidak mengirim _bulk, jadi jangan blokir
     if action == 'edit':
         barang = get_object_or_404(Barang, pk=request.POST.get('barang_id'))
         form = BarangForm(request.POST, request.FILES, instance=barang)
@@ -215,7 +237,7 @@ def handle_post(request):
         })
         return render(request, 'inventaris/index.html', context, status=400)
 
-    # 2) Proses aksi bulk: hanya jika request berasal dari bulkForm
+    # 3) Proses aksi bulk: hanya jika request berasal dari bulkForm
     if not request.POST.get('_bulk'):
         return render(request, 'inventaris/index.html', build_context(request))
 
