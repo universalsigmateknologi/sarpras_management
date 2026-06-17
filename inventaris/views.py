@@ -4,6 +4,7 @@ from django.db.models import Exists, OuterRef, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.contrib.auth.decorators import login_required
 
 from inventaris.forms import BarangForm
 from inventaris.models import Barang
@@ -255,7 +256,7 @@ def handle_post(request):
 
     return redirect(reverse('inventaris:index'))
 
-
+@login_required
 def inventaris_index(request):
     if request.method == 'POST':
         return handle_post(request)
