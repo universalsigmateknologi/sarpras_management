@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Manajemen Aset Sekolah{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['Sora', 'sans-serif'],
+                        body: ['DM Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        surface: '#FAFAFA',
+                        ink: '#0F0F0F',
+                        muted: '#999999',
+                        faint: '#E8E8E8',
+                        subtle: '#F3F3F3',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --sidebar-w: 260px;
+            --sidebar-collapsed: 72px;
+        }
+
+        * { box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: #FAFAFA; color: #0F0F0F; }
+
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #D4D4D4; border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: #AAA; }
+
+        .sidebar {
+            width: var(--sidebar-w);
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sidebar.collapsed { width: var(--sidebar-collapsed); }
+        .sidebar.collapsed .nav-label,
+        .sidebar.collapsed .sidebar-header-text,
+        .sidebar.collapsed .sidebar-footer-text {
+            opacity: 0; width: 0; overflow: hidden; white-space: nowrap;
+        }
+        .sidebar.collapsed .nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+        .sidebar.collapsed .nav-icon { margin-right: 0; }
+
+        .nav-label, .sidebar-header-text, .sidebar-footer-text {
+            transition: opacity 0.2s ease, width 0.2s ease;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-w);
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .main-content.expanded { margin-left: var(--sidebar-collapsed); }
+
+        .table-row {
+            transition: background 0.15s ease;
+        }
+        .table-row:hover {
+            background: #F7F7F7;
+        }
+
+        .custom-check {
+            appearance: none;
+            width: 16px; height: 16px;
+            border: 1.5px solid #D4D4D4;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            position: relative;
+        }
+        .custom-check:checked {
+            background: #0F0F0F;
+            border-color: #0F0F0F;
+        }
+        .custom-check:checked::after {
+            content: '';
+            position: absolute;
+            left: 4.5px; top: 1.5px;
+            width: 5px; height: 9px;
+            border: solid #fff;
+            border-width: 0 1.5px 1.5px 0;
+            transform: rotate(45deg);
+        }
+        .custom-check:focus-visible {
+            outline: 2px solid #0F0F0F;
+            outline-offset: 2px;
+        }
+
+        .badge {
+            font-size: 11px;
+            letter-spacing: 0.03em;
+            padding: 3px 10px;
+            border-radius: 99px;
+            font-weight: 500;
+        }
+        .badge-tersedia { background: #F0FDF4; color: #166534; }
+        .badge-dipinjam { background: #FFF7ED; color: #9A3412; }
+        .badge-perbaikan { background: #FEF2F2; color: #991B1B; }
+
+        .cond-dot {
+            width: 6px; height: 6px; border-radius: 50%; display: inline-block;
+        }
+
+        .toast-container {
+            position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .toast {
+            background: #0F0F0F; color: #fff;
+            padding: 12px 20px; border-radius: 8px;
+            font-size: 13px; font-family: 'DM Sans', sans-serif;
+            transform: translateY(20px); opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-width: 320px;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 1000;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(4px);
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-panel {
+            position: fixed; top: 50%; left: 50%; z-index: 1001;
+            transform: translate(-50%, -50%) scale(0.96);
+            opacity: 0; pointer-events: none;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .modal-panel.active { transform: translate(-50%, -50%) scale(1); opacity: 1; pointer-events: auto; }
+
+        .sort-icon { opacity: 0.3; transition: opacity 0.15s; font-size: 10px; }
+        th:hover .sort-icon { opacity: 0.6; }
+        th.sorted .sort-icon { opacity: 1; }
+
+        .page-btn {
+            width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 6px; font-size: 13px;
+            cursor: pointer; transition: all 0.15s;
+            border: 1px solid transparent;
+        }
+        .page-btn:hover { background: #F3F3F3; }
+        .page-btn.active { background: #0F0F0F; color: #fff; border-color: #0F0F0F; }
+        .page-btn[aria-disabled="true"] { opacity: 0.4; cursor: not-allowed; }
+
+        .filter-tab {
+            padding: 6px 16px; border-radius: 99px;
+            font-size: 13px; cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid #E8E8E8;
+            background: transparent; color: #666;
+        }
+        .filter-tab:hover { border-color: #CCC; color: #333; }
+        .filter-tab.active { background: #0F0F0F; color: #fff; border-color: #0F0F0F; }
+
+        .stat-card {
+            border: 1px solid #E8E8E8;
+            border-radius: 10px;
+            padding: 20px 24px;
+            background: #fff;
+            transition: border-color 0.2s ease;
+        }
+        .stat-card:hover { border-color: #CCC; }
+
+        .aksi-btn {
+            width: 30px; height: 30px;
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 6px; cursor: pointer;
+            transition: all 0.15s ease;
+            color: #999; font-size: 13px;
+        }
+        .aksi-btn:hover { background: #F0F0F0; color: #0F0F0F; }
+
+        .table-row.selected { background: #F5F5F0; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-up { animation: fadeUp 0.4s ease forwards; }
+        .fade-up-d1 { animation-delay: 0.05s; opacity: 0; }
+        .fade-up-d2 { animation-delay: 0.1s; opacity: 0; }
+        .fade-up-d3 { animation-delay: 0.15s; opacity: 0; }
+        .fade-up-d4 { animation-delay: 0.2s; opacity: 0; }
+
+        .bulk-bar {
+            position: fixed; bottom: -60px; left: 50%; transform: translateX(-50%);
+            background: #0F0F0F; color: #fff;
+            padding: 12px 24px; border-radius: 12px;
+            font-size: 13px; z-index: 900;
+            display: flex; align-items: center; gap: 16px;
+            transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        }
+        .bulk-bar.visible { bottom: 24px; }
+        .bulk-bar button {
+            background: #fff; color: #0F0F0F;
+            padding: 5px 14px; border-radius: 6px;
+            font-size: 12px; font-weight: 500;
+            cursor: pointer; border: none;
+            transition: opacity 0.15s;
+        }
+        .bulk-bar button:hover { opacity: 0.85; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen overflow-x-hidden" {% block body_attrs %}{% endblock %}>
+    <aside class="sidebar fixed top-0 left-0 h-full bg-white border-r border-faint z-50 flex flex-col" id="sidebar" role="navigation" aria-label="Menu utama">
+        <div class="flex items-center px-5 h-16 border-b border-faint flex-shrink-0">
+            <div class="w-8 h-8 bg-ink rounded-lg flex items-center justify-center flex-shrink-0">
+                <i class="fa-solid fa-school text-white text-xs"></i>
+            </div>
+            <span class="sidebar-header-text ml-3 font-display font-600 text-sm tracking-tight">Aset Sekolah</span>
+        </div>
+
+        <nav class="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+            <a href="#" class="nav-item flex items-center px-3 py-2.5 rounded-lg text-sm {% if active_page == 'dashboard' %}bg-ink text-white{% else %}text-muted hover:text-ink hover:bg-subtle{% endif %}" data-nav="dashboard">
+                <i class="fa-regular fa-grid-2 nav-icon w-5 text-center mr-3 text-[13px]"></i>
+                <span class="nav-label">Dashboard</span>
+            </a>
+            <a href="{% url 'inventaris:index' %}" class="nav-item flex items-center px-3 py-2.5 rounded-lg text-sm {% if active_page == 'inventaris' %}bg-ink text-white{% else %}text-muted hover:text-ink hover:bg-subtle{% endif %}" data-nav="inventaris">
+                <i class="fa-regular fa-boxes-stacked nav-icon w-5 text-center mr-3 text-[13px]"></i>
+                <span class="nav-label">Inventaris</span>
+            </a>
+            <a href="#" class="nav-item flex items-center px-3 py-2.5 rounded-lg text-sm {% if active_page == 'peminjaman' %}bg-ink text-white{% else %}text-muted hover:text-ink hover:bg-subtle{% endif %}" data-nav="peminjaman">
+                <i class="fa-regular fa-hand-holding nav-icon w-5 text-center mr-3 text-[13px]"></i>
+                <span class="nav-label">Peminjaman</span>
+            </a>
+            <a href="#" class="nav-item flex items-center px-3 py-2.5 rounded-lg text-sm {% if active_page == 'pengembalian' %}bg-ink text-white{% else %}text-muted hover:text-ink hover:bg-subtle{% endif %}" data-nav="pengembalian">
+                <i class="fa-regular fa-rotate-left nav-icon w-5 text-center mr-3 text-[13px]"></i>
+                <span class="nav-label">Pengembalian</span>
+            </a>
+            <a href="#" class="nav-item flex items-center px-3 py-2.5 rounded-lg text-sm {% if active_page == 'laporan' %}bg-ink text-white{% else %}text-muted hover:text-ink hover:bg-subtle{% endif %}" data-nav="laporan">
+                <i class="fa-regular fa-file-lines nav-icon w-5 text-center mr-3 text-[13px]"></i>
+                <span class="nav-label">Laporan</span>
+            </a>
+
+            <div class="pt-4 pb-2 px-3">
+                <div class="h-px bg-faint sidebar-header-text"></div>
+            </div>
+
+            <a href="#" class="nav-item flex items-center px-3 py-2.5 rounded-lg text-sm {% if active_page == 'ruangan' %}bg-ink text-white{% else %}text-muted hover:text-ink hover:bg-subtle{% endif %}" data-nav="ruangan">
+                <i class="fa-regular fa-door-open nav-icon w-5 text-center mr-3 text-[13px]"></i>
+                <span class="nav-label">Ruangan</span>
+            </a>
+            <a href="#" class="nav-item flex items-center px-3 py-2.5 rounded-lg text-sm {% if active_page == 'kategori' %}bg-ink text-white{% else %}text-muted hover:text-ink hover:bg-subtle{% endif %}" data-nav="kategori">
+                <i class="fa-regular fa-tags nav-icon w-5 text-center mr-3 text-[13px]"></i>
+                <span class="nav-label">Kategori</span>
+            </a>
+            <a href="#" class="nav-item flex items-center px-3 py-2.5 rounded-lg text-sm {% if active_page == 'pengaturan' %}bg-ink text-white{% else %}text-muted hover:text-ink hover:bg-subtle{% endif %}" data-nav="pengaturan">
+                <i class="fa-regular fa-gear nav-icon w-5 text-center mr-3 text-[13px]"></i>
+                <span class="nav-label">Pengaturan</span>
+            </a>
+        </nav>
+
+        <div class="flex items-center px-4 py-4 border-t border-faint flex-shrink-0">
+            <div class="w-8 h-8 rounded-full bg-subtle flex items-center justify-center flex-shrink-0">
+                <span class="text-xs font-medium text-ink">AP</span>
+            </div>
+            <div class="sidebar-footer-text ml-3">
+                <p class="text-xs font-medium text-ink leading-tight">Admin Pusat</p>
+                <p class="text-[11px] text-muted leading-tight">admin@sekolah.id</p>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content min-h-screen" id="mainContent">
+        <header class="sticky top-0 z-40 bg-surface/80 backdrop-blur-md border-b border-faint">
+            <div class="flex items-center justify-between h-16 px-6">
+                <div class="flex items-center gap-4">
+                    <button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-subtle transition-colors" id="toggleSidebar" aria-label="Toggle sidebar">
+                        <i class="fa-solid fa-bars text-sm text-muted"></i>
+                    </button>
+                    <div>
+                        <h1 class="font-display font-600 text-base tracking-tight">{% block page_title %}Inventaris Aset{% endblock %}</h1>
+                        <p class="text-[11px] text-muted">{% block page_subtitle %}Kelola seluruh aset sekolah dalam satu tempat{% endblock %}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    {% block topbar_actions %}
+                    <button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-subtle transition-colors relative" aria-label="Notifikasi">
+                        <i class="fa-regular fa-bell text-sm text-muted"></i>
+                        <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-ink rounded-full"></span>
+                    </button>
+                    <button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-subtle transition-colors" aria-label="Ekspor">
+                        <i class="fa-regular fa-arrow-up-from-bracket text-sm text-muted"></i>
+                    </button>
+                    {% endblock %}
+                </div>
+            </div>
+        </header>
+
+        <div class="p-6 max-w-[1400px]">
+            {% if messages %}
+            <div class="mb-6 space-y-2">
+                {% for message in messages %}
+                <div class="rounded-lg border px-4 py-3 text-sm {% if message.tags == 'error' %}border-red-200 bg-red-50 text-red-700{% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-700{% else %}border-emerald-200 bg-emerald-50 text-emerald-700{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+    <div class="modal-panel bg-white rounded-2xl w-[90vw] max-w-md shadow-xl" id="modalPanel" role="dialog" aria-modal="true" aria-label="Detail aset">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="font-display font-600 text-base" id="modalTitle">{% block modal_title %}Detail Aset{% endblock %}</h2>
+                <button class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-subtle transition-colors" onclick="closeModal()" aria-label="Tutup">
+                    <i class="fa-solid fa-xmark text-sm text-muted"></i>
+                </button>
+            </div>
+            <div id="modalContent" class="space-y-4">
+                {% block modal_body %}{% endblock %}
+            </div>
+            {% block modal_actions %}{% endblock %}
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const toggleBtn = document.getElementById('toggleSidebar');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalPanel = document.getElementById('modalPanel');
+        const searchInput = document.getElementById('searchInput');
+        const toastContainer = document.getElementById('toastContainer');
+
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+        });
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', (event) => {
+                if (item.getAttribute('href') === '#') {
+                    event.preventDefault();
+                    showToast(`Navigasi ke ${item.querySelector('.nav-label').textContent}`);
+                }
+            });
+        });
+
+        function openModal() {
+            modalOverlay.classList.add('active');
+            modalPanel.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            modalOverlay.classList.remove('active');
+            modalPanel.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') closeModal();
+            if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+                event.preventDefault();
+                if (searchInput) searchInput.focus();
+            }
+        });
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('show'));
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+    </script>
+    {% block extra_body %}{% endblock %}
+</body>
+</html>

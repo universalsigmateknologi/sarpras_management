@@ -1,0 +1,337 @@
+{% extends 'base.html' %}
+
+{% block title %}Inventaris Aset - Manajemen Aset Sekolah{% endblock %}
+
+{% block content %}
+<form method="post" id="bulkForm" action="{% url 'inventaris:index' %}">
+    {% csrf_token %}
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8" aria-label="Ringkasan aset">
+        <div class="stat-card fade-up fade-up-d1">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs text-muted font-medium uppercase tracking-wider">Total Aset</span>
+                <i class="fa-regular fa-cube text-[11px] text-muted"></i>
+            </div>
+            <p class="font-display font-700 text-2xl tracking-tight">{{ total_count|floatformat:"0" }}</p>
+            <p class="text-[11px] text-muted mt-1">Terdaftar dalam sistem</p>
+        </div>
+        <div class="stat-card fade-up fade-up-d2">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs text-muted font-medium uppercase tracking-wider">Tersedia</span>
+                <i class="fa-regular fa-circle-check text-[11px] text-muted"></i>
+            </div>
+            <p class="font-display font-700 text-2xl tracking-tight">{{ available_count|floatformat:"0" }}</p>
+            <p class="text-[11px] text-muted mt-1">Siap digunakan</p>
+        </div>
+        <div class="stat-card fade-up fade-up-d3">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs text-muted font-medium uppercase tracking-wider">Dipinjamkan</span>
+                <i class="fa-regular fa-arrow-right-arrow-left text-[11px] text-muted"></i>
+            </div>
+            <p class="font-display font-700 text-2xl tracking-tight">{{ borrowed_count|floatformat:"0" }}</p>
+            <p class="text-[11px] text-muted mt-1">Sedang digunakan</p>
+        </div>
+        <div class="stat-card fade-up fade-up-d4">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs text-muted font-medium uppercase tracking-wider">Perbaikan</span>
+                <i class="fa-regular fa-wrench text-[11px] text-muted"></i>
+            </div>
+            <p class="font-display font-700 text-2xl tracking-tight">{{ maintenance_count|floatformat:"0" }}</p>
+            <p class="text-[11px] text-muted mt-1">Dalam proses</p>
+        </div>
+    </section>
+
+    <section class="bg-white border border-faint rounded-xl overflow-hidden fade-up" style="animation-delay:0.25s; opacity:0;" aria-label="Tabel inventaris">
+        <div class="p-5 border-b border-faint">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-2 flex-wrap" id="filterTabs" role="tablist">
+                    {% for option in status_options %}
+                    <a href="?{{ option.query }}" class="filter-tab {% if option.active %}active{% endif %}" role="tab" aria-selected="{% if option.active %}true{% else %}false{% endif %}">{{ option.label }}</a>
+                    {% endfor %}
+                </div>
+                <form method="get" action="{% url 'inventaris:index' %}" class="relative">
+                    <input type="hidden" name="status" value="{{ status_filter }}">
+                    <input type="hidden" name="sort" value="{{ sort_key }}">
+                    <input type="hidden" name="dir" value="{{ direction }}">
+                    <i class="fa-regular fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[12px] text-muted"></i>
+                    <input type="text" id="searchInput" name="q" value="{{ query }}" placeholder="Cari aset..." class="w-full sm:w-56 pl-9 pr-10 py-2 text-sm bg-subtle border-0 rounded-lg focus:outline-none focus:ring-1 focus:ring-ink/20 placeholder:text-muted/60 font-body" aria-label="Cari aset">
+                    <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded hover:bg-ink/5" aria-label="Cari">
+                        <i class="fa-solid fa-arrow-right text-[11px] text-muted"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm {% if not page_obj.object_list %}hidden{% endif %}" id="assetTable">
+                <thead>
+                    <tr class="border-b border-faint text-left">
+                        <th class="w-10 px-5 py-3">
+                            <input type="checkbox" class="custom-check" id="selectAll" aria-label="Pilih semua">
+                        </th>
+                        {% for option in sort_options %}
+                        <th class="px-4 py-3 text-[11px] text-muted font-medium uppercase tracking-wider cursor-pointer select-none {% if option.active %}sorted{% endif %} {% if option.key == 'kategori' %}hidden md:table-cell{% endif %} {% if option.key == 'lokasi' or option.key == 'kondisi' %}hidden lg:table-cell{% endif %}">
+                            <a href="?{% if base_query %}{{ base_query }}&{% endif %}sort={{ option.key }}&dir={{ option.next_direction }}" class="inline-flex items-center">
+                                {{ option.label }} <i class="fa-solid {{ option.icon }} sort-icon ml-1"></i>
+                            </a>
+                        </th>
+                        {% endfor %}
+                        <th class="w-24 px-4 py-3 text-[11px] text-muted font-medium uppercase tracking-wider text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    {% for barang in page_obj.object_list %}
+                    <tr class="table-row border-b border-faint/60 {% if detail_barang.id == barang.id or edit_barang.id == barang.id %}selected{% endif %}" data-status="{% if barang.is_perbaikan %}perbaikan{% elif barang.is_dipinjam %}dipinjam{% else %}tersedia{% endif %}" data-kode="{{ barang.kode_aset }}" data-nama="{{ barang.nama_barang }}" data-kategori="{{ barang.kategori|default:'-' }}" data-lokasi="{{ barang.lokasi|default:'-' }}" data-kondisi="{{ barang.kondisi }}">
+                        <td class="px-5 py-3.5">
+                            <input type="checkbox" name="barang_ids" value="{{ barang.pk }}" class="custom-check row-check" aria-label="Pilih {{ barang.kode_aset }}">
+                        </td>
+                        <td class="px-4 py-3.5 font-mono text-xs text-muted">{{ barang.kode_aset }}</td>
+                        <td class="px-4 py-3.5 font-medium">{{ barang.nama_barang }}</td>
+                        <td class="px-4 py-3.5 text-muted hidden md:table-cell">{{ barang.kategori|default:'-' }}</td>
+                        <td class="px-4 py-3.5 text-muted hidden lg:table-cell">{{ barang.lokasi|default:'-' }}</td>
+                        <td class="px-4 py-3.5 hidden lg:table-cell">
+                            <span class="cond-dot {% if barang.kondisi == 'Baik' or barang.kondisi == 'Baru' %}bg-emerald-400{% elif barang.kondisi == 'Rusak Ringan' or barang.kondisi == 'Cukup' %}bg-amber-400{% else %}bg-red-400{% endif %} mr-1.5"></span>{{ barang.kondisi }}
+                        </td>
+                        <td class="px-4 py-3.5">
+                            {% if barang.is_perbaikan %}
+                            <span class="badge badge-perbaikan">Perbaikan</span>
+                            {% elif barang.is_dipinjam %}
+                            <span class="badge badge-dipinjam">Dipinjam</span>
+                            {% else %}
+                            <span class="badge badge-tersedia">Tersedia</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3.5 text-right">
+                            <a href="?{% if base_query %}{{ base_query }}&{% endif %}detail={{ barang.pk }}" class="aksi-btn" aria-label="Lihat detail">
+                                <i class="fa-regular fa-eye"></i>
+                            </a>
+                            <a href="?{% if base_query %}{{ base_query }}&{% endif %}edit={{ barang.pk }}" class="aksi-btn" aria-label="Edit">
+                                <i class="fa-regular fa-pen"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% if not page_obj.object_list %}
+            <div id="emptyState" class="py-16 text-center">
+                <i class="fa-regular fa-folder-open text-3xl text-faint mb-3 block"></i>
+                <p class="text-sm text-muted">Tidak ada aset ditemukan</p>
+                <p class="text-xs text-muted/60 mt-1">Coba ubah kata kunci atau filter</p>
+            </div>
+            {% else %}
+            <div id="emptyState" class="hidden py-16 text-center">
+                <i class="fa-regular fa-folder-open text-3xl text-faint mb-3 block"></i>
+                <p class="text-sm text-muted">Tidak ada aset ditemukan</p>
+                <p class="text-xs text-muted/60 mt-1">Coba ubah kata kunci atau filter</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="px-5 py-4 border-t border-faint flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p class="text-xs text-muted" id="rowCount">
+                {% if page_obj.has_other_pages %}
+                Menampilkan {{ page_obj.start_index }}-{{ page_obj.end_index }} dari {{ visible_count }} aset
+                {% else %}
+                Menampilkan {{ visible_count }} dari {{ visible_count }} aset
+                {% endif %}
+            </p>
+            <div class="flex items-center gap-1" id="pagination">
+                {% if page_obj.has_previous %}
+                <a class="page-btn" href="?{% if base_query %}{{ base_query }}&{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Halaman sebelumnya">
+                    <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                </a>
+                {% else %}
+                <span class="page-btn" aria-disabled="true">
+                    <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                </span>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if num == page_obj.number %}
+                    <span class="page-btn active">{{ num }}</span>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a class="page-btn" href="?{% if base_query %}{{ base_query }}&{% endif %}page={{ num }}">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <a class="page-btn" href="?{% if base_query %}{{ base_query }}&{% endif %}page={{ page_obj.next_page_number }}" aria-label="Halaman berikutnya">
+                    <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                </a>
+                {% else %}
+                <span class="page-btn" aria-disabled="true">
+                    <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                </span>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+</form>
+
+<div class="bulk-bar {% if open_modal %}visible{% endif %}" id="bulkBar">
+    <span id="bulkCount">0 aset dipilih</span>
+    <button type="submit" name="action" value="pinjamkan" form="bulkForm">Pinjamkan</button>
+    <button type="submit" name="action" value="label" form="bulkForm">Beri Label</button>
+    <button type="submit" name="action" value="tersedia" form="bulkForm" style="background:transparent; color:#999; border:1px solid #444;">Tersedia</button>
+    <button type="button" id="clearSelection" style="background:transparent; color:#999; border:1px solid #444;">Batal</button>
+</div>
+{% endblock %}
+
+{% block modal_title %}{% if edit_barang %}Edit Aset{% elif detail_barang %}Detail Aset{% else %}Detail Aset{% endif %}{% endblock %}
+
+{% block modal_body %}
+{% if detail_barang %}
+<div class="flex items-center justify-between p-4 bg-subtle rounded-xl">
+    <div>
+        <p class="font-mono text-xs text-muted">{{ detail_barang.kode_aset }}</p>
+        <p class="font-display font-600 text-sm mt-0.5">{{ detail_barang.nama_barang }}</p>
+    </div>
+    {% if detail_barang.is_perbaikan %}
+    <span class="badge badge-perbaikan">Perbaikan</span>
+    {% elif detail_barang.is_dipinjam %}
+    <span class="badge badge-dipinjam">Dipinjam</span>
+    {% else %}
+    <span class="badge badge-tersedia">Tersedia</span>
+    {% endif %}
+</div>
+<div class="grid grid-cols-2 gap-4">
+    <div>
+        <p class="text-[11px] text-muted uppercase tracking-wider mb-1">Kategori</p>
+        <p class="text-sm font-medium">{{ detail_barang.kategori|default:'-' }}</p>
+    </div>
+    <div>
+        <p class="text-[11px] text-muted uppercase tracking-wider mb-1">Lokasi</p>
+        <p class="text-sm font-medium">{{ detail_barang.lokasi|default:'-' }}</p>
+    </div>
+    <div>
+        <p class="text-[11px] text-muted uppercase tracking-wider mb-1">Kondisi</p>
+        <p class="text-sm font-medium">{{ detail_barang.kondisi }}</p>
+    </div>
+    <div>
+        <p class="text-[11px] text-muted uppercase tracking-wider mb-1">Tahun Perolehan</p>
+        <p class="text-sm font-medium">{% if detail_barang.tanggal_pembelian %}{{ detail_barang.tanggal_pembelian|date:"Y" }}{% else %}-{% endif %}</p>
+    </div>
+    <div>
+        <p class="text-[11px] text-muted uppercase tracking-wider mb-1">Merek</p>
+        <p class="text-sm font-medium">{{ detail_barang.merek|default:'-' }}</p>
+    </div>
+    <div>
+        <p class="text-[11px] text-muted uppercase tracking-wider mb-1">Nomor Seri</p>
+        <p class="text-sm font-medium">{{ detail_barang.nomor_seri|default:'-' }}</p>
+    </div>
+    <div class="col-span-2">
+        <p class="text-[11px] text-muted uppercase tracking-wider mb-1">Harga Beli</p>
+        <p class="text-sm font-medium">Rp {% if detail_barang.harga_beli %}{{ detail_barang.harga_beli|floatformat:"0" }}{% else %}0{% endif %}</p>
+    </div>
+    <div class="col-span-2">
+        <p class="text-[11px] text-muted uppercase tracking-wider mb-1.5">Catatan</p>
+        <p class="text-sm text-muted leading-relaxed">{% if detail_barang.catatan %}{{ detail_barang.catatan|linebreaksbr }}{% else %}-{% endif %}</p>
+    </div>
+</div>
+{% elif edit_barang and form %}
+<form method="post" enctype="multipart/form-data" action="{% url 'inventaris:index' %}?{% if base_query %}{{ base_query }}&{% endif %}edit={{ edit_barang.pk }}">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="edit">
+    <input type="hidden" name="barang_id" value="{{ edit_barang.pk }}">
+    {% if form.non_field_errors %}
+    <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+        {% for error in form.non_field_errors %}
+        <p>{{ error }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+    <div class="grid grid-cols-2 gap-4">
+        {% for field in form %}
+        <div class="{% if field.name == 'catatan' %}col-span-2{% endif %}">
+            <label class="text-[11px] text-muted uppercase tracking-wider mb-1 block">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+            <p class="mt-1 text-[11px] text-red-600">{{ field.errors|join:", " }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    <div class="mt-6 pt-4 border-t border-faint flex gap-2">
+        <button type="submit" class="flex-1 py-2.5 bg-ink text-white text-sm rounded-lg font-medium hover:opacity-90 transition-opacity">Simpan Perubahan</button>
+        <button type="button" onclick="closeModal()" class="px-4 py-2.5 border border-faint text-sm rounded-lg text-muted hover:border-ccc transition-colors">Batal</button>
+    </div>
+</form>
+{% else %}
+<div class="rounded-xl bg-subtle p-4 text-sm text-muted">Pilih aset untuk melihat detail atau edit data.</div>
+{% endif %}
+{% endblock %}
+
+{% block modal_actions %}
+{% if detail_barang %}
+<div class="mt-6 pt-4 border-t border-faint flex gap-2">
+    <a href="?{% if base_query %}{{ base_query }}&{% endif %}edit={{ detail_barang.pk }}" class="flex-1 py-2.5 bg-ink text-white text-sm rounded-lg font-medium text-center hover:opacity-90 transition-opacity">Edit Aset</a>
+    <button type="button" onclick="closeModal()" class="px-4 py-2.5 border border-faint text-sm rounded-lg text-muted hover:border-ccc transition-colors">Tutup</button>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_body %}
+{% if open_modal %}
+<script>
+    document.addEventListener('DOMContentLoaded', openModal);
+</script>
+{% endif %}
+<script>
+    const tableBody = document.getElementById('tableBody');
+    const selectAllCheck = document.getElementById('selectAll');
+    const bulkBar = document.getElementById('bulkBar');
+    const bulkCount = document.getElementById('bulkCount');
+    const clearSelection = document.getElementById('clearSelection');
+
+    function updateBulkBar() {
+        const checked = tableBody ? tableBody.querySelectorAll('.row-check:checked') : [];
+        const count = checked.length;
+        bulkCount.textContent = `${count} aset dipilih`;
+        if (count > 0) {
+            bulkBar.classList.add('visible');
+        } else {
+            bulkBar.classList.remove('visible');
+        }
+    }
+
+    if (selectAllCheck && tableBody) {
+        selectAllCheck.addEventListener('change', () => {
+            const isChecked = selectAllCheck.checked;
+            tableBody.querySelectorAll('.row-check').forEach((checkbox) => {
+                const row = checkbox.closest('.table-row');
+                if (row.style.display !== 'none') {
+                    checkbox.checked = isChecked;
+                    row.classList.toggle('selected', isChecked);
+                }
+            });
+            updateBulkBar();
+        });
+
+        tableBody.addEventListener('change', (event) => {
+            if (!event.target.classList.contains('row-check')) return;
+            const row = event.target.closest('.table-row');
+            row.classList.toggle('selected', event.target.checked);
+            const visibleChecks = tableBody.querySelectorAll('.table-row:not([style*="display: none"]) .row-check');
+            const checkedVisible = tableBody.querySelectorAll('.table-row:not([style*="display: none"]) .row-check:checked');
+            selectAllCheck.checked = visibleChecks.length > 0 && visibleChecks.length === checkedVisible.length;
+            updateBulkBar();
+        });
+    }
+
+    if (clearSelection) {
+        clearSelection.addEventListener('click', () => {
+            if (tableBody) {
+                tableBody.querySelectorAll('.row-check:checked').forEach((checkbox) => {
+                    checkbox.checked = false;
+                    checkbox.closest('.table-row').classList.remove('selected');
+                });
+            }
+            if (selectAllCheck) selectAllCheck.checked = false;
+            updateBulkBar();
+        });
+    }
+
+    updateBulkBar();
+</script>
+{% endblock %}
