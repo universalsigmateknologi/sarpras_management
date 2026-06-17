@@ -218,10 +218,6 @@
         </div>
 
         <nav class="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
-            <a href="#" class="nav-item flex items-center px-3 py-2.5 rounded-lg text-sm {% if active_page == 'dashboard' %}bg-ink text-white{% else %}text-muted hover:text-ink hover:bg-subtle{% endif %}" data-nav="dashboard">
-                <i class="fa-regular fa-grid-2 nav-icon w-5 text-center mr-3 text-[13px]"></i>
-                <span class="nav-label">Dashboard</span>
-            </a>
             <a href="{% url 'inventaris:index' %}" class="nav-item flex items-center px-3 py-2.5 rounded-lg text-sm {% if active_page == 'inventaris' %}bg-ink text-white{% else %}text-muted hover:text-ink hover:bg-subtle{% endif %}" data-nav="inventaris">
                 <i class="fa-regular fa-boxes-stacked nav-icon w-5 text-center mr-3 text-[13px]"></i>
                 <span class="nav-label">Inventaris</span>
@@ -230,13 +226,9 @@
                 <i class="fa-regular fa-hand-holding nav-icon w-5 text-center mr-3 text-[13px]"></i>
                 <span class="nav-label">Peminjaman</span>
             </a>
-            <a href="#" class="nav-item flex items-center px-3 py-2.5 rounded-lg text-sm {% if active_page == 'pengembalian' %}bg-ink text-white{% else %}text-muted hover:text-ink hover:bg-subtle{% endif %}" data-nav="pengembalian">
-                <i class="fa-regular fa-rotate-left nav-icon w-5 text-center mr-3 text-[13px]"></i>
-                <span class="nav-label">Pengembalian</span>
-            </a>
-            <a href="#" class="nav-item flex items-center px-3 py-2.5 rounded-lg text-sm {% if active_page == 'laporan' %}bg-ink text-white{% else %}text-muted hover:text-ink hover:bg-subtle{% endif %}" data-nav="laporan">
-                <i class="fa-regular fa-file-lines nav-icon w-5 text-center mr-3 text-[13px]"></i>
-                <span class="nav-label">Laporan</span>
+            <a href="#" class="nav-item flex items-center px-3 py-2.5 rounded-lg text-sm {% if active_page == 'pengaturan' %}bg-ink text-white{% else %}text-muted hover:text-ink hover:bg-subtle{% endif %}" data-nav="pengaturan">
+                <i class="fa-regular fa-gear nav-icon w-5 text-center mr-3 text-[13px]"></i>
+                <span class="nav-label">Laptop Siswa</span>
             </a>
 
             <div class="pt-4 pb-2 px-3">
@@ -254,7 +246,7 @@
             <a href="#" class="nav-item flex items-center px-3 py-2.5 rounded-lg text-sm {% if active_page == 'pengaturan' %}bg-ink text-white{% else %}text-muted hover:text-ink hover:bg-subtle{% endif %}" data-nav="pengaturan">
                 <i class="fa-regular fa-gear nav-icon w-5 text-center mr-3 text-[13px]"></i>
                 <span class="nav-label">Pengaturan</span>
-            </a>
+            </a>            
         </nav>
 
         <div class="flex items-center px-4 py-4 border-t border-faint flex-shrink-0">
