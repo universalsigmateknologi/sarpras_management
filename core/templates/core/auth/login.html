@@ -1,4 +1,5 @@
 {% load static %}
+{% block extra_head %}{% endblock %}
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -9,11 +10,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'DM Sans', sans-serif; background: #FAFAFA; color: #0F0F0F; }
 
-        /* Scrollbar */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #D4D4D4; border-radius: 99px; }
@@ -36,10 +37,6 @@
             border-color: #0F0F0F;
             box-shadow: 0 0 0 3px rgba(15,15,15,0.06);
         }
-        .input-group input.error {
-            border-color: #DC2626;
-            box-shadow: 0 0 0 3px rgba(220,38,38,0.06);
-        }
         .input-group label {
             position: absolute;
             left: 14px; top: 50%;
@@ -60,9 +57,11 @@
             letter-spacing: 0.04em;
             text-transform: uppercase;
         }
-        .input-group input.error + label {
-            color: #DC2626;
+        .input-group input.error {
+            border-color: #DC2626;
+            box-shadow: 0 0 0 3px rgba(220,38,38,0.06);
         }
+        .input-group input.error + label { color: #DC2626; }
 
         /* Custom checkbox */
         .custom-check {
@@ -75,10 +74,7 @@
             position: relative;
             flex-shrink: 0;
         }
-        .custom-check:checked {
-            background: #0F0F0F;
-            border-color: #0F0F0F;
-        }
+        .custom-check:checked { background: #0F0F0F; border-color: #0F0F0F; }
         .custom-check:checked::after {
             content: '';
             position: absolute;
@@ -111,60 +107,13 @@
         }
         .btn-primary:hover { opacity: 0.9; }
         .btn-primary:active { transform: scale(0.985); }
-        .btn-primary:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .btn-primary .btn-text { transition: opacity 0.2s; }
-        .btn-primary.loading .btn-text { opacity: 0; }
-        .btn-primary .spinner {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        .btn-primary.loading .spinner { opacity: 1; }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-        @keyframes spin {
-            to { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-
-        /* Error message */
-        .error-msg {
-            font-size: 12px;
-            color: #DC2626;
-            margin-top: 6px;
-            display: none;
-            align-items: center;
-            gap: 4px;
-        }
-        .error-msg.visible { display: flex; }
-
-        /* Toast */
-        .toast-container {
-            position: fixed; top: 24px; right: 24px; z-index: 9999;
-            display: flex; flex-direction: column; gap: 8px;
-        }
-        .toast {
-            padding: 12px 20px; border-radius: 10px;
-            font-size: 13px; font-family: 'DM Sans', sans-serif;
-            transform: translateX(20px); opacity: 0;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            max-width: 340px;
-            display: flex; align-items: center; gap: 8px;
-        }
-        .toast.show { transform: translateX(0); opacity: 1; }
-        .toast-error { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
-        .toast-success { background: #F0FDF4; color: #166534; border: 1px solid #BBF7D0; }
-
-        /* Grid background subtle */
-        .bg-grid {
-            background-image:
-                linear-gradient(rgba(0,0,0,0.025) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0,0,0,0.025) 1px, transparent 1px);
-            background-size: 48px 48px;
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
         }
 
         /* Animasi masuk */
@@ -194,7 +143,7 @@
             opacity: 0.5;
         }
 
-        /* Password toggle */
+        /* Password toggle (tanpa JS, icon tetap tampil) */
         .pw-toggle {
             position: absolute;
             right: 14px; top: 50%;
@@ -223,7 +172,10 @@
             font-size: 11px; color: #BBB; text-transform: uppercase; letter-spacing: 0.08em;
         }
         .divider::before, .divider::after {
-            content: ''; flex: 1; height: 1px; background: #E8E8E8;
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #E8E8E8;
         }
 
         /* Social button */
@@ -239,32 +191,26 @@
             font-size: 13px; color: #444;
             font-family: 'DM Sans', sans-serif;
         }
-        .btn-social:hover {
-            border-color: #CCC;
-            background: #FAFAFA;
-        }
+        .btn-social:hover { border-color: #CCC; background: #FAFAFA; }
         .btn-social:active { transform: scale(0.98); }
 
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                transition-duration: 0.01ms !important;
-            }
+        /* Error text */
+        .error-msg {
+            font-size: 12px;
+            color: #DC2626;
+            margin-top: 6px;
         }
     </style>
 </head>
 <body class="min-h-screen bg-grid flex items-center justify-center p-4 relative overflow-hidden">
 
-    <!-- Elemen dekoratif floating -->
     <div class="float-el w-16 h-16 top-[12%] left-[8%]" style="animation: float 6s ease-in-out infinite;"></div>
     <div class="float-el w-10 h-10 top-[20%] right-[12%]" style="animation: float 7s ease-in-out 1s infinite;"></div>
     <div class="float-el w-20 h-20 bottom-[15%] left-[15%]" style="animation: float 8s ease-in-out 0.5s infinite;"></div>
     <div class="float-el w-8 h-8 bottom-[25%] right-[10%]" style="animation: float 5.5s ease-in-out 2s infinite;"></div>
     <div class="float-el w-12 h-12 top-[60%] left-[5%]" style="animation: float 7.5s ease-in-out 1.5s infinite;"></div>
 
-    <!-- Kartu login -->
     <div class="w-full max-w-[400px] relative z-10">
-        <!-- Header / Branding -->
         <div class="text-center mb-8 fade-up fade-d1">
             <div class="w-12 h-12 bg-ink rounded-xl flex items-center justify-center mx-auto mb-4">
                 <i class="fa-solid fa-school text-white text-lg"></i>
@@ -273,263 +219,112 @@
             <p class="text-sm text-muted mt-1.5">Masuk untuk mengakses dashboard</p>
         </div>
 
-        <!-- Form card -->
         <div class="bg-white border border-faint rounded-2xl p-7 fade-up fade-d2">
-            <form id="loginForm" novalidate autocomplete="off">
-                <!-- Email -->
+
+            {# Flash messages (jika Anda menggunakan django.contrib.messages) #}
+            {% if messages %}
+                <div class="mb-4 space-y-2">
+                    {% for message in messages %}
+                        <div class="rounded-lg border px-4 py-3 text-sm {% if message.tags == 'error' %}border-red-200 bg-red-50 text-red-700{% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-700{% else %}border-emerald-200 bg-emerald-50 text-emerald-700{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+
+            <form method="post" action="" autocomplete="off">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    {% for error in form.non_field_errors %}
+                        <div class="mb-4 rounded-lg border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm">
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+
                 <div class="input-group mb-1 fade-up fade-d3">
-                    <input type="email" id="emailInput" placeholder=" " autocomplete="email">
-                    <label for="emailInput">Alamat email</label>
-                </div>
-                <div class="error-msg" id="emailError">
-                    <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
-                    <span></span>
-                </div>
+                    <input
+                        type="text"
+                        name="username"
+                        id="emailInput"
 
-                <!-- Password -->
+                        placeholder=" "
+                        autocomplete="email"
+                        value="{{ form.username.value|default_if_none:'' }}"
+                        class="{% if form.username.errors %}error{% endif %}"
+                    >
+                    <label for="emailInput">Username</label>
+                </div>
+                {% if form.username.errors %}
+                    <div class="error-msg">{{ form.username.errors.0 }}</div>
+                {% endif %}
+
                 <div class="input-group mt-4 mb-1 fade-up fade-d4" style="position:relative;">
-                    <input type="password" id="passwordInput" placeholder=" " autocomplete="current-password" style="padding-right:44px;">
+                    <input
+                        type="password"
+                        name="password"
+                        id="passwordInput"
+                        placeholder=" "
+                        autocomplete="current-password"
+                        value="{{ form.password.value|default_if_none:'' }}"
+                        class="{% if form.password.errors %}error{% endif %}"
+                        style="padding-right:44px;"
+                    >
                     <label for="passwordInput">Kata sandi</label>
-                    <button type="button" class="pw-toggle" id="pwToggle" aria-label="Tampilkan kata sandi">
+                    <span class="pw-toggle" aria-hidden="true">
                         <i class="fa-regular fa-eye"></i>
-                    </button>
+                    </span>
                 </div>
-                <div class="error-msg" id="passwordError">
-                    <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
-                    <span></span>
-                </div>
+                {% if form.password.errors %}
+                    <div class="error-msg">{{ form.password.errors.0 }}</div>
+                {% endif %}
 
-                <!-- Remember & Lupa -->
                 <div class="flex items-center justify-between mt-5 mb-6 fade-up fade-d5">
                     <label class="flex items-center gap-2 cursor-pointer select-none">
-                        <input type="checkbox" class="custom-check" id="rememberCheck">
+                        <input type="checkbox" class="custom-check" name="remember" id="rememberCheck" {% if form.remember.value %}checked{% endif %}>
                         <span class="text-[13px] text-muted">Ingat saya</span>
                     </label>
-                    <a href="#" class="link-subtle" id="forgotLink">Lupa kata sandi?</a>
+                    <a href="#" class="link-subtle" aria-disabled="true">Lupa kata sandi?</a>
                 </div>
 
-                <!-- Tombol masuk -->
                 <div class="fade-up fade-d6">
-                    <button type="submit" class="btn-primary" id="loginBtn">
-                        <span class="btn-text">Masuk</span>
-                        <span class="spinner">
-                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style="animation: spin 0.7s linear infinite;">
-                                <circle cx="9" cy="9" r="7.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-dasharray="32 16"/>
-                            </svg>
-                        </span>
+                    <button type="submit" class="btn-primary">
+                        Masuk
                     </button>
                 </div>
             </form>
 
-            <!-- Divider -->
             <div class="divider my-6 fade-up fade-d7">atau masuk dengan</div>
 
-            <!-- Social login -->
             <div class="flex gap-3 fade-up fade-d7">
-                <button class="btn-social" id="googleBtn">
-                    <svg width="16" height="16" viewBox="0 0 24 24">
+                <a class="btn-social" href="#" aria-disabled="true">
+                    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
                         <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
                         <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                         <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                     </svg>
                     Google
-                </button>
-                <button class="btn-social" id="microsoftBtn">
-                    <svg width="16" height="16" viewBox="0 0 23 23">
+                </a>
+                <a class="btn-social" href="#" aria-disabled="true">
+                    <svg width="16" height="16" viewBox="0 0 23 23" aria-hidden="true">
                         <rect x="1" y="1" width="10" height="10" fill="#F25022"/>
                         <rect x="12" y="1" width="10" height="10" fill="#7FBA00"/>
                         <rect x="1" y="12" width="10" height="10" fill="#00A4EF"/>
                         <rect x="12" y="12" width="10" height="10" fill="#FFB900"/>
                     </svg>
                     Microsoft
-                </button>
+                </a>
             </div>
         </div>
 
-        <!-- Footer -->
         <p class="text-center text-[12px] text-muted/60 mt-6 fade-up fade-d7">
-            Belum punya akun? <a href="#" class="link-subtle font-medium" id="registerLink">Hubungi administrator</a>
+            Belum punya akun? <a href="#" class="link-subtle font-medium" aria-disabled="true">Hubungi administrator</a>
         </p>
     </div>
 
-    <!-- Toast container -->
-    <div class="toast-container" id="toastContainer"></div>
-
-    <script>
-        // ===== Elemen DOM =====
-        const form = document.getElementById('loginForm');
-        const emailInput = document.getElementById('emailInput');
-        const passwordInput = document.getElementById('passwordInput');
-        const emailError = document.getElementById('emailError');
-        const passwordError = document.getElementById('passwordError');
-        const pwToggle = document.getElementById('pwToggle');
-        const loginBtn = document.getElementById('loginBtn');
-        const forgotLink = document.getElementById('forgotLink');
-        const googleBtn = document.getElementById('googleBtn');
-        const microsoftBtn = document.getElementById('microsoftBtn');
-        const registerLink = document.getElementById('registerLink');
-
-        // ===== Toggle visibility password =====
-        pwToggle.addEventListener('click', () => {
-            const isPassword = passwordInput.type === 'password';
-            passwordInput.type = isPassword ? 'text' : 'password';
-            pwToggle.innerHTML = isPassword
-                ? '<i class="fa-regular fa-eye-slash"></i>'
-                : '<i class="fa-regular fa-eye"></i>';
-        });
-
-        // ===== Validasi & submit =====
-        function showError(errorEl, message) {
-            errorEl.querySelector('span').textContent = message;
-            errorEl.classList.add('visible');
-            errorEl.previousElementSibling.querySelector('input').classList.add('error');
-        }
-
-        function clearError(errorEl) {
-            errorEl.classList.remove('visible');
-            errorEl.previousElementSibling.querySelector('input').classList.remove('error');
-        }
-
-        // Hapus error saat mengetik
-        emailInput.addEventListener('input', () => clearError(emailError));
-        passwordInput.addEventListener('input', () => clearError(passwordError));
-
-        function validateEmail(email) {
-            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-        }
-
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            let valid = true;
-
-            // Validasi email
-            const email = emailInput.value.trim();
-            if (!email) {
-                showError(emailError, 'Email wajib diisi');
-                valid = false;
-            } else if (!validateEmail(email)) {
-                showError(emailError, 'Format email tidak valid');
-                valid = false;
-            } else {
-                clearError(emailError);
-            }
-
-            // Validasi password
-            const password = passwordInput.value;
-            if (!password) {
-                showError(passwordError, 'Kata sandi wajib diisi');
-                valid = false;
-            } else if (password.length < 6) {
-                showError(passwordError, 'Minimal 6 karakter');
-                valid = false;
-            } else {
-                clearError(passwordError);
-            }
-
-            if (!valid) return;
-
-            // Simulasi loading
-            loginBtn.classList.add('loading');
-            loginBtn.disabled = true;
-
-            setTimeout(() => {
-                loginBtn.classList.remove('loading');
-                loginBtn.disabled = false;
-
-                // Simulasi: cek kredensial demo
-                if (email === 'admin@sekolah.id' && password === 'admin123') {
-                    showToast('Berhasil masuk! Mengalihkan...', 'success');
-                    // Animasi redirect simulasi
-                    document.body.style.transition = 'opacity 0.5s ease';
-                    setTimeout(() => {
-                        document.body.style.opacity = '0';
-                    }, 800);
-                } else {
-                    showToast('Email atau kata sandi salah', 'error');
-                    // Shake effect pada form
-                    const card = form.closest('.bg-white');
-                    card.style.animation = 'none';
-                    card.offsetHeight; // reflow
-                    card.style.animation = 'shake 0.4s ease';
-                }
-            }, 1800);
-        });
-
-        // Shake animation (ditambahkan via JS agar tidak selalu aktif)
-        const shakeStyle = document.createElement('style');
-        shakeStyle.textContent = `
-            @keyframes shake {
-                0%, 100% { transform: translateX(0); }
-                20% { transform: translateX(-6px); }
-                40% { transform: translateX(6px); }
-                60% { transform: translateX(-4px); }
-                80% { transform: translateX(4px); }
-            }
-        `;
-        document.head.appendChild(shakeStyle);
-
-        // ===== Lupa password =====
-        forgotLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            const email = emailInput.value.trim();
-            if (email && validateEmail(email)) {
-                showToast(`Link reset dikirim ke ${email}`, 'success');
-            } else {
-                showToast('Masukkan email terlebih dahulu', 'error');
-                emailInput.focus();
-            }
-        });
-
-        // ===== Social login =====
-        googleBtn.addEventListener('click', () => {
-            showToast('Mengalihkan ke Google Sign-In...', 'success');
-        });
-        microsoftBtn.addEventListener('click', () => {
-            showToast('Mengalihkan ke Microsoft Sign-In...', 'success');
-        });
-
-        // ===== Register link =====
-        registerLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            showToast('Hubungi admin sekolah untuk pendaftaran akun', 'success');
-        });
-
-        // ===== Toast =====
-        function showToast(message, type = 'error') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            
-            const icon = type === 'success'
-                ? '<i class="fa-solid fa-circle-check text-sm"></i>'
-                : '<i class="fa-solid fa-circle-xmark text-sm"></i>';
-            
-            toast.innerHTML = icon + `<span>${message}</span>`;
-            container.appendChild(toast);
-
-            requestAnimationFrame(() => {
-                toast.classList.add('show');
-            });
-
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        // ===== Keyboard: Enter pada input =====
-        emailInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                passwordInput.focus();
-            }
-        });
-
-        // ===== Fokus otomatis ke email =====
-        window.addEventListener('load', () => {
-            setTimeout(() => emailInput.focus(), 600);
-        });
-    </script>
 </body>
 </html>
+
