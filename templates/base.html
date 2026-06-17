@@ -1,32 +1,14 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Manajemen Aset Sekolah{% endblock %}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        display: ['Sora', 'sans-serif'],
-                        body: ['DM Sans', 'sans-serif'],
-                    },
-                    colors: {
-                        surface: '#FAFAFA',
-                        ink: '#0F0F0F',
-                        muted: '#999999',
-                        faint: '#E8E8E8',
-                        subtle: '#F3F3F3',
-                    }
-                }
-            }
-        }
-    </script>
     <style>
         :root {
             --sidebar-w: 260px;
@@ -300,13 +282,13 @@
                 </div>
                 <div class="flex items-center gap-2">
                     {% block topbar_actions %}
-                    <button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-subtle transition-colors relative" aria-label="Notifikasi">
+                    <!-- <button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-subtle transition-colors relative" aria-label="Notifikasi">
                         <i class="fa-regular fa-bell text-sm text-muted"></i>
                         <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-ink rounded-full"></span>
                     </button>
                     <button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-subtle transition-colors" aria-label="Ekspor">
                         <i class="fa-regular fa-arrow-up-from-bracket text-sm text-muted"></i>
-                    </button>
+                    </button> -->
                     {% endblock %}
                 </div>
             </div>
