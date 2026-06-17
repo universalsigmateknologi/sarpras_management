@@ -154,7 +154,7 @@ def build_context(request):
             | Q(nama_barang__icontains=query)
             | Q(kategori__nama_kategori__icontains=query)
             | Q(lokasi__nama_ruangan__icontains=query)
-            | Q(kondisi__icontains=query)
+            | Q(kondisi__icontains=qubase_queryery)
             | Q(merek__icontains=query)
             | Q(nomor_seri__icontains=query)
         ).distinct()

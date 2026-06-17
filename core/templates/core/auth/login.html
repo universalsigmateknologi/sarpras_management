@@ -1,5 +1,5 @@
 {% load static %}
-{% block extra_head %}{% endblock %}
+{% block extra_head %}{% endblock %} 
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -281,13 +281,14 @@
                     <div class="error-msg">{{ form.password.errors.0 }}</div>
                 {% endif %}
 
-                <div class="flex items-center justify-between mt-5 mb-6 fade-up fade-d5">
+        <div class="flex items-center justify-between mt-5 mb-6 fade-up fade-d5">
                     <label class="flex items-center gap-2 cursor-pointer select-none">
-                        <input type="checkbox" class="custom-check" name="remember" id="rememberCheck" {% if form.remember.value %}checked{% endif %}>
+                        <input type="checkbox" class="custom-check" name="remember" id="rememberCheck" {% if request.POST.remember %}checked{% endif %}>
                         <span class="text-[13px] text-muted">Ingat saya</span>
                     </label>
                     <a href="#" class="link-subtle" aria-disabled="true">Lupa kata sandi?</a>
                 </div>
+
 
                 <div class="fade-up fade-d6">
                     <button type="submit" class="btn-primary">
